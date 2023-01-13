@@ -1,0 +1,47 @@
+\qns{Vanilla GAN Intuition and Pitfalls} \newline
+Although we have seen in discussions, homeworks, and lecture that Generative Adversarial Networks have great success in producing realistic images, the training process is not a simple task. In fact, there are many pitfalls in the training of GANs that make them slow and unstable. In this problem, we will investigate some of motivations of the Vanilla GAN alongside the problems that arise while using them. Namely, we will investigate problems with convergence and vanishing gradients.
+
+\begin{enumerate}
+    \qitem {
+    Let us first consider an MLE based method of calculating a generator. In order to estimate the underlying input distribution $P$, we try to learn a probability distribution $P_\theta$, parameterized by parameters $\theta$. If we attempt this using MLE, we end up having to minimize the loss function $-\frac{1}{n} \sum_{i=1}^n \log P_\theta(x^{(i)})$ over $\theta$, where $x^{(i)}$ represents the $i$th training example. Show that as the number of points in the input data tends to infinity, minimizing the loss function is the same as minimizing $D_{\text{KL}}(P || P_\theta)$, which is given by $D_{\text{KL}}(P || Q) = \mathbb{E}_{x \sim P}[\log \frac{P(x)}{Q(x)}]$. Conceptually, why might this pose a problem? Try considering points where $P(x)$ is nonzero but $P_\theta(x)$ is zero. \\
+    \textit{(Hint: Consider that when the number of input data points goes to infinity, the inputs are distributed according to the true probability distribution.)}
+    } 
+
+    \sol {
+        Applying the hint, we have that \[\min_\theta \lim_{n \rightarrow \infty} -\frac{1}{n} \sum_{i=1}^n \log P_\theta(x^{(i)}) = \min_\theta -\int P(x) \log P_\theta(x) dx\] Now, we note that this is the same as \[\min_\theta \int P(x) \log P(x) dx - \int P(x) \log P_\theta(x) dx\] because $\int P(x) \log P(x) dx$ is a constant with respect to $\theta$. Finally, we have that \[\min_\theta \int P(x) \log P(x) dx - \int P(x) \log P_\theta(x) dx = \min_\theta\mathbb{E}_{x \sim p}[\log \frac{P(x)}{P_\theta(x)}] = D_{\text{KL}}(P || P_\theta)\]
+
+        Consider if we have a point where $P(x) > 0$ but $P_\theta(x) = 0$. Then, the KL-divergence is infinite, which is undesirable. This issue becomes a problem when the real distribution is on located on some small, low-dimensional space. 
+    }
+    
+
+
+    \qitem {The GAN approach, on the other hand, involves training a generator $G_\theta$ and discriminator $D_\phi$. The generator takes in some random noise, $\epsilon \sim \mathcal{N}(0, 1)$, and outputs a sample input. The discriminator takes in an input and assigns it a probability that it came from the data distribution versus the generator.  We have seen in lecture that the GAN training procedure is analogous to a min-max two player non-cooperative game. That is, the generator and the discriminator are two different models that are both trained simultaneously with gradient descent with the objective of finding the Nash Equilibrium (i.e. when the generator/discriminator does not change its action regardless of its opponent's action). More formally, it is that the pair $(G^{*}, D^{*})$ such that 
+    \begin{align}
+        \min_{G}\max_{D} \mathbb{E}_{x \sim p_{r}(x)}[\log{D(x)}] + \mathbb{E}_{x \sim p_{g}(x)}[ \log{(1 - D(G(x)))}]
+    \end{align}
+    is achieved where $p_{r}$ is the distribution of the real data and $p_{g}$ is the distribution of the generated data. Suppose one player takes control of x to minimize $f(x, y) = xy$ while at the same time the other player constantly updates y to minimize $g(x, y) = -xy$. Show that it is impossible for gradient descent to converge assuming simultaneous updates.
+    }
+    
+    \sol {Since $\frac{\partial f}{\partial x} = y$ and $\frac{\partial g}{\partial y} = -x$, we have the following gradient descent updates for x and y:
+        \begin{align}
+            x_{t} = x_{t-1} - \eta y_{t-1} \\
+            y_{t} = y_{t-1} + \eta x_{t-1} 
+        \end{align}
+    If for some $T$, $x_{T}$ and $y_{T}$ have different signs, every following gradient descent update causes oscillation and unstable behavior. Thus, we will not have gradient descent converge.  We can also see this illustrated in the figure below. 
+    
+    \begin{figure}[h]
+        \centering
+        \includegraphics[width=0.6\textwidth]{nash_equilibrium.png}
+        \caption{Simulated Example of Updates}
+        \label{fig:my_label}
+    \end{figure}
+    
+    This is an example where we cannot achieve a Nash Equilibrium between two different players, and this is why sometimes GANs cannot achieve an optimal pair $(G^{*}, D^{*})$. 
+    }
+    
+    \qitem{Vanilla GANs also face the problem of vanishing gradients. Let us assume the case where in the training of our GAN, we happen to have the discriminator converge to being perfect. That is, $\forall x \in p_{r}, D(x) = 1$ and $\forall x \in p_{g}, D(x) = 0$. Furthermore, if we optimize the minimax equation seen above for the discriminator by holding the generator fixed, we see that $D^{*} = \frac{p_{r}}{p_{g} + p_{r}}$. Show that this causes the loss function defined in the minimax equation to go to zero.}
+    
+    \sol {If we have a perfect discriminator, then there are two cases. Either $p_{g} = 0, p_{r} \neq 0$ or $p_{g} \neq 0, p_{r} = 0$. In either case, notice that either one of the terms will become zero since the discriminator is perfect. The other term will cancel because either $p_{g}$ is zero or $p_{r}$ is zero. This means we have vanishing gradients in the case of the discriminator being perfect. Many would think that one of the reasons that GAN training is very hard is due to the idea that these probability distributions lie in very high dimensional manifolds. However, practically speaking, it has been shown that these distributions seem to concentrate in lower-dimensional manifolds. Since both $P_{r}$ and $P_{g}$ rest in low dimensional manifolds, the probability that these are disjoint is almost surely 1. When they have disjoint supports, we are always capable of finding a perfect discriminator that separates real and fake samples. Thus, we can see why this is a common issue with Vanilla GAN training.
+    }
+    
+\end{enumerate}

@@ -1,0 +1,59 @@
+\documentclass[11pt]{article}
+% \usepackage[utf8]{inputenc}
+% \usepackage{amsfonts}
+\usepackage{cs282}
+\usepackage{markup}
+\usepackage{macros}
+\usepackage{amsmath}
+
+\newlist{squarelist}{enumerate}{1}%
+\setlist[squarelist]{label={[\arabic*]}}%
+
+% Toggle comment between the following two lines to see/hide solutions
+\newcommand{\sol}[1]{{\vspace{2pt} \color{blue} \textbf{Solution: } #1}} % solutions in blue
+%\newcommand{\sol}[1]{} % no solution sketches
+
+\def\title{WGAN Homework}
+\date{Fall 2022}
+
+\begin{document}
+
+\maketitle
+
+Deliverables:  Please submit the code/notebooks/saved model as a zip file to the code Gradescope assignment.  Submit your written answers in the written Gradescope assignment, and attach a pdf printout of the notebooks.
+
+\begin{qunlist}
+    % Include any questions here with \input{}
+    \input{q_vanilla_gan_pitfalls}
+    \newpage
+    \input{q_wassterstein_distance}
+    \newpage
+    \input{q_wgan_improvement}
+    \newpage
+    \input{q_gan_coding}
+    \input{q_homework_process}
+    %\input{q_logistic_regression} 
+\end{qunlist}
+
+\vspace{60mm}
+
+\qnss{References}
+\begin{squarelist} 
+    \item Goodfellow, I., Pouget-Abadie, J., Mirza, M., Xu, B., Warde-Farley, D., Ozair, S., … Bengio, Y. (2014). Generative adversarial nets. In Advances in neural information processing systems (pp. 2672–2680).
+    \item Martin Arjovsky, Soumith Chintala, and Léon Bottou. 2017. Wasserstein Generative Adversarial Networks. In Proceedings of the 34th International Conference on Machine Learning - Volume 70 (ICML'17). JMLR.org, 214–223.
+    \item Ishaan Gulrajani, Faruk Ahmed, Martin Arjovsky, Vincent Dumoulin, and Aaron Courville. 2017. Improved training of Wasserstein GANs. In Proceedings of the 31st International Conference on Neural Information Processing Systems (NIPS'17). Curran Associates Inc., Red Hook, NY, USA, 5769–5779.
+    \item Questions were adapted from the following blog: \href{https://lilianweng.github.io/posts/2017-08-20-gan/}{From GAN to WGAN}
+
+\end{squarelist}
+
+
+\vspace{20mm}
+
+\textbf{Contributors:}
+\begin{itemize}
+    \item Darsh Balani
+    \item Sharan Sahu
+    \item Raghav Ramanujam
+\end{itemize}
+
+\end{document}

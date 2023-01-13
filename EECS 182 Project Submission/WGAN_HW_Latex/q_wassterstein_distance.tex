@@ -1,0 +1,84 @@
+\qns{Wasserstein Distance} \newline
+As we have seen, there are tons of problems encountered with Vanilla GAN training. As seen in lecture and discussion, Vanilla GAN training is based on a probability distribution measure of distance called Jenson-Shannon Divergence. In fact, this measure of distance is the root of all the problems we have seen above. In this problem, we will look at another measure of distance between probability distributions called Wasserstein Distance, also known as Earth-Mover (EM) Distance. This metric is the basis for why WGAN has better performance compared to Vanilla GAN.
+
+\begin{enumerate}
+    \qitem {The Wasserstein Distance is sometimes called the Earth-Mover Distance because informally, it can be thought as the minimum energy cost of moving and transforming a pile of dirt in the shape of one probability distribution to the shape of another probability distribution. Let us consider a simple case where the probability distributions are discrete. Suppose P and Q are two probability distributions, each having four piles of dirt and both having ten shovelfuls of dirt in total. The number of shovelfuls of dirt in each dirt pile are as follows:
+        \begin{align}
+            P_{1} = 3, P_{2} = 2, P_{3} = 1, P_{4} = 4Q_{1} = 1, Q_{2} = 2, Q_{3} = 4, Q_{4} = 3
+        \end{align}
+    Suppose we label the cost of moving $P_{i}$ to $Q_{i}$ as $\delta_{i}$. Then, we have the following relation: $\delta_{i+1} = \delta_{i} + P_{i} - Q_{i}$. Then, calculate the Earth-Mover Distance $W = \sum_{i} \abs{\delta_{i}}$. Assume $\delta_{0} = 0$
+    
+    \sol {If we graph out the probability distributions and try to count how much dirt we need to move over and cut to transform P to Q, we have effectively calculated the EM Distance. 
+    
+    \begin{figure}[h]
+        \centering
+        \includegraphics[width=0.8\textwidth]{EM_distance_discrete.png}
+        \caption{Step-By-Step Illustration of EM Distance Between P and Q}
+        \label{fig:my_label}
+    \end{figure}
+    
+    In order to change P into Q, we must do the following: 
+    \begin{enumerate}
+        \item Move 2 shovefuls of dirt from $P_{1}$ to $P_{2}$
+        \item Move 2 shovefuls of dirt from $P_{2}$ to $P_{3}$
+        \item Move 1 shovefuls of dirt from $Q_{3}$ to $Q_{4}$
+    \end{enumerate}
+    
+    Notice that this corresponds with the result we obtain using the relation given:
+    \begin{enumerate}
+        \item $\delta_{0} = 0$
+        \item $\delta_{1} = \delta_{0} + P_{1} - Q_{1} = 0 + 3 - 1 = 2$
+        \item $\delta_{2} = \delta_{1} + P_{2} - Q_{2} = 2 + 2 - 2 = 2$
+        \item $\delta_{3} = \delta_{2} + P_{3} - Q_{3} = 2 + 1 - 4 = -1$
+        \item $\delta_{4} = \delta_{3} + P_{4} - Q_{4} = -1 + 4 - 3 = 0$
+    \end{enumerate}
+    Therefore, $W = \sum_{i} \abs{\delta_{i}} = 2 + 2 + 1 = 5$.
+    }
+    
+    \qitem {One of the main reasons that the Wasserstein Distance metric is utilized in the WGAN is because it provides a smoother measure of distance between probability distributions compared to KL and JS Divergence. As we saw in Question 1, when there is no overlap between probability distributions $P_{r}$ and $P_{g}$, we are always capable of finding a perfect discriminator that separates real and fake samples if we are using JS Divergence as our distance metric. This results in vanishing gradient problems. However, we will see in this example that this is not the case if we are using Wasserstein distance. Suppose we have two probability distributions P and Q such that the following hold: 
+    \begin{align}
+        &\forall (x, y) \in P, x = 0, y \sim U(0, 1) \\ 
+         &\forall (x, y) \in Q, x = \theta, 0 \leq \theta \leq 1, y \sim U(0, 1)
+    \end{align}
+    Calculate the following measures of distance for both $\theta \neq 0$ and $\theta = 0$
+    \begin{enumerate}
+        \item KL Divergence 
+        \item JS Divergence 
+        \item Wasserstein Distance \\
+        \textit{Note: A divergence measures the distance between two distributions p and q. In particular, for distributions p and q with common support $\mathcal{X}$, typically used divergence metrics include}
+        \begin{align}
+            &D_{KL}(P || Q) = \mathbb{E}_{\bold{x} \sim P}[\log \frac{P(x)}{Q(x)}]          \tag*{\textit{(Kullback-Leibler Divergence)}} \\
+            &D_{JS}(P, Q) = \frac{1}{2}D_{KL}(P || \frac{P+Q}{2}) + \frac{1}{2}D_{KL}(Q || \frac{P+Q}{2}) \tag*{\textit{(Jenson-Shannon Divergence)}}
+        \end{align}
+    \end{enumerate}
+    }
+    
+    \sol {When $\theta \neq 0$:
+        \begin{align}
+            &D_{KL}(P || Q) = \sum_{x = 0, y \sim U(0, 1)}P(x)\log(\frac{P(x)}{Q(x)}) = \sum_{x = 0, y \sim U(0, 1)}1\log(\frac{1}{0}) = +\infty \\
+            &D_{KL}(Q || P) = \sum_{x = \theta, y \sim U(0, 1)}Q(x)\log(\frac{Q(x)}{P(x)}) = \sum_{x = \theta, y \sim U(0, 1)}1\log(\frac{1}{0}) = +\infty \\ 
+            &D_{JS}(P, Q) = \frac{1}{2}D_{KL}(P || \frac{P+Q}{2}) + \frac{1}{2}D_{KL}(Q || \frac{P+Q}{2}) = \sum_{x = 0, y \sim U(0, 1)}1\log(\frac{1}{1/2}) = \log2 \\
+            &W(P, Q) = \abs{\theta}
+        \end{align}
+        When $\theta = 0$:
+        \begin{align}
+            &D_{KL}(P || Q) = D_{KL}(Q || P) = D_{JS}(P, Q) = 0 \\
+            &W(P, Q) = \abs{\theta}
+        \end{align}
+    }
+    
+    \qitem {Using your calculations above, explain why Wasserstein Distance is a better measure of distance? Why does it provide a smoother measure of distance, and how can this help improve the learning process using gradient descent?
+    }
+    
+    \sol {$D_{KL}$ gives us an infinite measure of distance when the distributions are disjoint. The value of $D_{JS}$ jumps very suddenly when the two distributions are fully overlapped, but this does not occur with Wasserstein distance. This example shows that there exist sequences of distributions that don’t converge under the JS or KL, but which do converge under the Wasserstein distance. Furthermore, notice that when the two distributions are not overlapping, we can converge until we find the perfect discriminator. This results in $D_{JS} = \log2$. When looking at the loss incurred by the generator, $L_{G} = 2D_{JS}(P, Q) - \log4 = 0$. Thus, we encounter the vanishing gradient problem. This is something we do not have to worry about with Wasserstein Distance.
+    }
+    
+    \qitem {When we extend the Wasserstein Distance to continuous probability distributions, we have the following: $W(p_{r}, p_{g}) = \inf_{\gamma \sim \prod(p_{r}, p_{g})}\mathbb{E}_{(x, y) \sim \gamma}\lVert x - y \rVert$ where $\prod(p_{r}, p_{g})$ is the set of all joint probability distributions over $p_{r}$ and $p_{g}$ and $\gamma(x, y)$ is the percentage of dirt one should transport from x to y to make x the same probability distribution as y. Conceptually explain why it is computationally intractable to solve this optimization problem.
+    
+    \sol {
+    The reason that we cannot simply solve this optimization problem is because it is intractable to exhaust all the possible $\prod(p_{r}, p_{g})$ in order to calculate $\inf_{\gamma \sim \prod(p_{r}, p_{g})}\mathbb{E}_{(x, y) \sim \gamma}\lVert x - y \rVert$. Luckily, we can take advantage of Kantorovich-Rubenstein Duality by taking the sup over 1-Lipschitz continuous functions.
+    }
+    }
+    }
+\end{enumerate}
+Instead of optimizing the Wasserstein Distance directly, we make use of simple trick that you may have encountered in EECS 127/227 called duality. In particular, we make use of Kantorovich-Rubenstein Duality. This allows us to transform the Wasserstein Distance optimization problem into $\sup_{\lVert f \rVert_{L} \leq 1} \mathbb{E}_{x \sim p_{r}} D(x) - \mathbb{E}_{x \sim p_{g}} D(x)$\footnote{For those interested in the proof: \href{https://vincentherrmann.github.io/blog/wasserstein/}{Kantorovich-Rubenstein Duality Blog Post and Proof}} where $\lVert f \rVert_{L} \leq 1$ is notation to indicate $f$ must be a 1-Lipschitz continuous function (i.e. $\forall x_{1}, x_{2} \in \mathbb{R}, \abs{f(x_{1}) - f(x_{2})} \leq \abs{x_{1} - x_{2}}$). Now, our optimization problem is computationally tractable and can be easily trained via gradient descent. Note that with this transformation, the discriminator is not a direct critic of telling the fake samples apart from the real ones anymore. Instead, it is trained to learn a 1-Lipschitz continuous function to help compute Wasserstein distance. As the loss function decreases in the training, the Wasserstein distance gets smaller and the generator model’s output grows closer to the real data distribution. One problem with this formulation is that it is difficult to maintain 1-Lipschitz continuity. However, this problem can be resolved using weight clipping. After every gradient update, clamp the weights $w$ to a small window, such as $[-0.01, 0.01]$. This results in a compact parameter space and allows us to preserve the 1-Lipschitz continuity.

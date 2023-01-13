@@ -1,0 +1,28 @@
+\qns{Improving The WGAN Via The Gradient Penalty} \newline
+Now that we have built some more intuition on why the WGAN is an improvement on the Vanilla GAN, we will lastly introduce a method to improve WGAN. In Question 2, we saw how we could use duality and Lipschitz continuity to create an easier optimization problem for gradient descent to solve. However, we needed to use a technique called weight clamping to ensure that we preserve Lipschitz continuity after each iteration of gradient descent. It turns out that weight clipping is a terrible way to enforce a Lipschitz constraint because it can cause WGAN to suffer slow convergence after weight clipping (when clipping window is too large) and vanishing gradients (when clipping window is too small). Luckily, a paper published in 2017 called \textit{Improving Training of Wasserstein GANs}\footnote{For those interested in the paper: \href{https://arxiv.org/abs/1704.00028/}{Improving Training of Wasserstein GANs}}  proposed an alternative to weight clipping by using the gradient penalty. We will investigate the motivation for this penalty.
+
+\begin{enumerate}
+    \qitem {A real-valued function $f: \mathbb{R}^{n} \longrightarrow \mathbb{R}$ is called a K-Lipschitz continuous function if $\forall x_{1}, x_{2} \in \mathbb{R}^{n}, \lVert f(x_{1}) - f(x_{2}) \rVert \leq K \lVert x_{1} - x_{2} \rVert$. You may assume that f is differentiable on $\mathbb{R}^{n}$.
+    \begin{enumerate}
+        \item Let f is K-Lipschitz, its gradient norm must be atmost K. \newline
+        \textit{(Hint: Consider $x_{1} = x + h$ and $x_{2} = x$ for $x, h \in \mathbb{R}^{n}$)}
+        \item Proof if f has a gradient norm at most K, then f is K-Lipschitz. \newline
+        \textit{(Hint: Use Mean Value Theorem and consider the line $(1-x)t + ty$)}
+    \end{enumerate}
+    \textit{Note: The Mean Value Theorem says that if f is a continuous function on the closed interval $[a,b]$ and differentiable on the interval $(a, b)$, then $\exists c \in (a, b)$ such that $f(b) - f(a) = f'(c)(b-a)$}
+    
+    \sol {
+    \begin{enumerate}
+        \item We will first prove the forward direction. If f is K-Lipschitz, then $\forall x_{1}, x_{2} \in \mathbb{R}^{n}, \lVert f(x_{1}) - f(x_{2}) \rVert \leq K \lVert x_{1} - x_{2} \rVert$. Using $x_{1} = x + h$ and $x_{2} = x$ for $x, h \in \mathbb{R}^{n}$, we get $\lVert f(x + h) - f(x) \rVert \leq K \lVert x + h - x \rVert$. Thus, $\lVert \frac{f(x + h) - f(x)}{h} \rVert \leq K$. Taking the limit results in $\lim_{h \longrightarrow \infty} \lVert \frac{f(x + h) - f(x)}{h} \rVert = \lVert \nabla f \rVert \leq K$. 
+        \item We will prove the reverse direction. Let $\gamma(t) = (1-x)t + ty$. Then, by the Mean Value Theorem, $f(y) - f(x) = f(\gamma(1)) - f(\gamma(0)) = (f(\gamma(r)))^{'}$ where $r \in [x, y]$. Then, $(f(\gamma(r)))^{'} = \nabla f(\gamma(r)) \cdot \gamma^{'}(r) = \nabla f(\gamma(r))(y-x)$. Taking the norm on both sides results in $\lvert f(x) - f(y) \rVert = \lVert \nabla f(\gamma(r))(x-y) \rVert \leq \lVert \nabla f(\gamma(r)) \rVert \lVert x - y \rVert$. Since we know that the gradient norm of f is bounded by K, we get $\lvert f(x) - f(y) \rVert \leq K \lVert x - y \rVert$. Thus, f is K-Lipschitz.
+    \end{enumerate}
+    
+    }
+    
+    \qitem{The authors of the paper proposed an alternative objective for WGAN: $\mathbb{E}_{x \sim p_{r}} D(x) - \mathbb{E}_{x \sim p_{g}} D(x) + \lambda \mathbb{E}_{x \sim p_{\hat{x}}}[\lVert \nabla D(\hat{x}) \rVert - 1)^{2}]$ where $\hat{x}$ is a randomly weighted average between a real and generated sample such that $\hat{x} = \epsilon x + (1 - \epsilon) x$ where $\epsilon \sim Unif([0, 1])$. Using what you learned from part a, explain why this alternative objective makes sense mathematically. How does the gradient penalty work?
+    \textit{(Hint: Recall that using Kantorovich-Rubenstein Duality, we required $f$ to be a 1-Lipschitz continuous function)}
+    
+    \sol{Using part a, we know that f is a 1-Lipschitz continuous function iff its gradient norm will be atmost 1. Therefore, by having this penalty of the form $\lambda \mathbb{E}_{x \sim p_{\hat{x}}}[(\lVert \nabla D(\hat{x}) \rVert - 1)^{2}]$, we can enforce $D$ be 1-Lipschitz continuous. This allows us to make full use of Kantorovich-Rubenstein Duality while avoiding a lot of the problems that came with weight clipping. This penalty term is intuitive. The discriminator is trained to output values as small as possible for real samples, and as large as possible for fake samples, while the gradient penalty term preserves D being 1-Lipschitz continuous. A loss that has no strict lower bound might seem strange, but in practice the competition between the generator and the discriminator keeps the terms roughly equal.}
+    }
+    }
+\end{enumerate}
